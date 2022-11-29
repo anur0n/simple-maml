@@ -48,29 +48,40 @@ class MAMLTRPO(object):
 
         with torch.set_grad_enabled(old_policy is None):
             valid_episodes = valid
-            
-            policy = self.policy_net(valid_episodes.observations.view((-1, *valid_episodes.observation_shape)), params=params)
+
+            policy = self.policy_net(
+                valid_episodes.observations.view(
+                    (-1, *valid_episodes.observation_shape)
+                ),
+                params=params,
+            )
 
             if old_policy is None:
                 old_policy = detach_distribution(policy)
 
-
             log_probs = policy.log_prob(
-                valid_episodes.actions.view((-1, *valid_episodes.action_shape)) + config.epsilon
+                valid_episodes.actions.view((-1, *valid_episodes.action_shape))
+                + config.epsilon
             )
             log_probs = log_probs.view(len(valid_episodes), valid_episodes.batch_size)
 
-            log_ratio = log_probs - old_policy.log_prob(valid_episodes.actions.view((-1, *valid_episodes.action_shape)) + config.epsilon).view(len(valid_episodes), valid_episodes.batch_size)
+            log_ratio = log_probs - old_policy.log_prob(
+                valid_episodes.actions.view((-1, *valid_episodes.action_shape))
+                + config.epsilon
+            ).view(len(valid_episodes), valid_episodes.batch_size)
             ratio = torch.exp(log_ratio)
 
             losses = -weighted_mean(
                 ratio * valid_episodes.advantages, lengths=valid_episodes.lengths
             )
             kls = weighted_mean(
-                kl_divergence(policy, old_policy).view(len(valid_episodes), valid_episodes.batch_size), lengths=valid_episodes.lengths
+                kl_divergence(policy, old_policy).view(
+                    len(valid_episodes), valid_episodes.batch_size
+                ),
+                lengths=valid_episodes.lengths,
             )
 
-        return losses.mean() + config.epsilon, kls.mean(), old_policy
+        return losses.mean(), kls.mean(), old_policy
 
     def step(
         self,

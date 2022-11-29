@@ -1,14 +1,14 @@
 env_name = "HalfCheetahVel-v2"
 
 env_kwargs = {
-  'low': 0.0,
-  'high': 2.0,
-  'normalization_scale': 10.0,
-  'max_episode_steps': 100,
+    "low": 0.0,
+    "high": 2.0,
+    "normalization_scale": 10.0,
+    "max_episode_steps": 100,
 }
 
 # EPS for avoiding log(0)
-epsilon = 1e-7
+epsilon = 1e-15
 
 # Discount factor gamma.
 gamma = 0.99
