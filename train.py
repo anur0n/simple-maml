@@ -118,6 +118,10 @@ def main(args):
             progress_bar.write(
                 f"Loss after: {logs['loss_after']} KL After: {logs['kl_after']}"
             )
+        progress_bar.write(
+            f"Returns train: {logs['train_returns'].sum()} returns valid: {logs['valid_returns'].sum()}"
+        )
+        
         # print('#########################################################################')
 
         # Save policy

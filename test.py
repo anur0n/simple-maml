@@ -53,6 +53,8 @@ def main(args):
         baseline=baseline,
     )
 
+    config.num_batches = args.num_batches
+
     num_iterations = 0
     logs = {"tasks": []}
     train_returns, valid_returns = [], []
@@ -76,11 +78,33 @@ def main(args):
 
         train_returns.append(rl_utils.get_train_returns(trains))
         valid_returns.append(rl_utils.get_valid_returns(valids))
+        progress_bar.write(f'Train returns: {train_returns[-1].sum()} Valid returns: {valid_returns[-1].sum()}')
         progress_bar.update(1)
     logs["train_returns"] = np.concatenate(train_returns, axis=0)
     logs["valid_returns"] = np.concatenate(valid_returns, axis=0)
 
     print(logs)
+
+    env = gym.make("HalfCheetahVel-v2", render_mode="human")
+    # env.close()
+    input_size = reduce(mul, env.observation_space.shape, 1)
+
+    output_size = reduce(mul, env.action_space.shape, 1)
+    observation, _ = env.reset()
+    rewards_total = 0
+    for _ in range(1000):
+        observations_tensor = torch.from_numpy(observation).to(torch.float64).unsqueeze(0)
+        pi = policy(observations_tensor)
+        actions_tensor = pi.sample()
+        actions = actions_tensor.squeeze().cpu().numpy()
+        # actions = env.action_space.sample()
+        observation, reward, terminated, truncated, info = env.step(actions)
+        rewards_total+=reward
+
+        if terminated or truncated:
+            observation, info = env.reset()
+    env.close()
+    print(rewards_total)
 
 
 if __name__ == "__main__":
@@ -93,7 +117,7 @@ if __name__ == "__main__":
         "--policy",
         type=str,
         required=True,
-        default="output/policy.th",
+        default="output_no_batch/policy.th",
         help="path to the policy checkpoint",
     )
 
@@ -116,10 +140,10 @@ if __name__ == "__main__":
         type=str,
         required=True,
         default="output",
-        help="name of the output folder (default: maml)",
+        help="name of the output folder (default: output)",
     )
 
-    misc.add_argument("--seed", type=int, default=1, help="random seed")
+    misc.add_argument("--seed", type=int, default=12, help="random seed")
 
     misc.add_argument(
         "--use-cuda",
