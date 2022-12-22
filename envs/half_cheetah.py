@@ -2,17 +2,26 @@ import numpy as np
 
 from gym.envs.mujoco.half_cheetah_v4 import HalfCheetahEnv as HalfCheetahEnv_
 
+from gym.spaces import Box
+
 class HalfCheetahEnv(HalfCheetahEnv_):
+    def __init__(self, **kwargs):
+        super(HalfCheetahEnv, self).__init__(**kwargs)
+        self.observation_space = Box(low=-np.inf, high=np.inf, shape=(20,))
 
-    # def _get_obs(self):
-    #     return np.concatenate([self.data.qpos.flat[1:], self.data.qvel.flat, self.get_body_com('torso').flat,]).astype(np.float64).flatten()
+    def _set_action_space(self):
+        self.action_space = Box(low=-10.0, high=10.0, dtype=np.float32)
+        return self.action_space
+        
+    def _get_obs(self):
+        return np.concatenate([self.data.qpos.flat[1:], self.data.qvel.flat, self.get_body_com('torso').flat,]).flatten()
 
-    def viewer_setup(self):
-        # camera_id = self.model.camera_name2id('track')
-        # self.viewer.cam.type = 2
-        # self.viewer.cam.fixedcamid = camera_id
-        # self.viewer.cam.distance = self.model.stat.extent * 0.35
-        self.viewer._hide_overlay = True
+    # def viewer_setup(self):
+    #     camera_id = self.model.camera_name2id('track')
+    #     self.viewer.cam.type = 2
+    #     self.viewer.cam.fixedcamid = camera_id
+    #     self.viewer.cam.distance = self.model.stat.extent * 0.35
+    #     self.viewer._hide_overlay = True
 
     # def render(self, mode='human'):
     #     if mode == 'rgb_array':
@@ -22,7 +31,7 @@ class HalfCheetahEnv(HalfCheetahEnv_):
     #         return data
     #     elif mode == 'human':
     #         self._get_viewer().render()
-    pass
+    # pass
 
 class HalfCheetahVelEnv(HalfCheetahEnv):
     """Half-cheetah environment with target velocity, as described in [1]. The 

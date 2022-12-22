@@ -18,6 +18,12 @@ import argparse
 from baseline import LinearFeatureBaseline
 import numpy as np
 
+import PIL
+from PIL import Image
+
+import cv2
+
+
 torch.autograd.set_detect_anomaly(True)
 
 
@@ -83,9 +89,15 @@ def main(args):
     logs["train_returns"] = np.concatenate(train_returns, axis=0)
     logs["valid_returns"] = np.concatenate(valid_returns, axis=0)
 
-    print(logs)
+    # print(logs)
 
-    env = gym.make("HalfCheetahVel-v2", render_mode="human")
+
+    ##################### Video recording ##################
+    fps = 30
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    video = None
+
+    env = gym.make("HalfCheetahVel-v2", render_mode="rgb_array")
     # env.close()
     input_size = reduce(mul, env.observation_space.shape, 1)
 
@@ -93,7 +105,13 @@ def main(args):
     observation, _ = env.reset()
     rewards_total = 0
     for _ in range(1000):
-        observations_tensor = torch.from_numpy(observation).to(torch.float64).unsqueeze(0)
+        frame = env.render()
+        if video is None:
+            video_file = os.path.join(os.getcwd(),'output','test_with_smapling_30.mp4')
+            print(video_file, frame.shape)
+            video = cv2.VideoWriter(video_file, fourcc, float(fps), (frame.shape[1], frame.shape[0]))
+        video.write(frame)
+        observations_tensor = torch.from_numpy(observation).unsqueeze(0)
         pi = policy(observations_tensor)
         actions_tensor = pi.sample()
         actions = actions_tensor.squeeze().cpu().numpy()
@@ -104,6 +122,8 @@ def main(args):
         if terminated or truncated:
             observation, info = env.reset()
     env.close()
+    video.release()
+    # video.close()
     print(rewards_total)
 
 
