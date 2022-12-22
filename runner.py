@@ -83,6 +83,8 @@ class Runner(object):
         # Sample the validation trajectories with the adapted policy
         valid_episodes = self.create_episodes(params=params, gamma=gamma, gae_lambda=gae_lambda, device=device)
         valid_episodes.log('_enqueueAt', datetime.now(timezone.utc))
+        loss = reinforce_loss(self.policy_net, train_episodes_all[0], params=params)
+        params = self.policy_net.update_params(loss, params=params, step_size=fast_lr, first_order=False)
 
         return train_episodes_all, valid_episodes
 

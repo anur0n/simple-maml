@@ -47,8 +47,8 @@ class NormalPolicy(nn.Module):
             self.add_module(
                 "layer{0}".format(i), nn.Linear(layer_sizes[i - 1], layer_sizes[i])
             )
-            self.batch_norm_layers.append(nn.BatchNorm1d(layer_sizes[i]))
-            self.add_module("bn_layer{0}".format(i), self.batch_norm_layers[-1])
+            # self.batch_norm_layers.append(nn.BatchNorm1d(layer_sizes[i]))
+            # self.add_module("bn_layer{0}".format(i), self.batch_norm_layers[-1])
             # norm = nn.BatchNorm1d(10)
             # norm.run
 
@@ -83,13 +83,13 @@ class NormalPolicy(nn.Module):
                 weight=params["layer{0}.weight".format(i)],
                 bias=params["layer{0}.bias".format(i)],
             )
-            output = F.batch_norm(
-                output,
-                running_mean=self.batch_norm_layers[i - 1].running_mean,
-                running_var=self.batch_norm_layers[i - 1].running_var,
-                weight=params["bn_layer{0}.weight".format(i)],
-                bias=params["bn_layer{0}.bias".format(i)],
-            )
+            # output = F.batch_norm(
+            #     output,
+            #     running_mean=self.batch_norm_layers[i - 1].running_mean,
+            #     running_var=self.batch_norm_layers[i - 1].running_var,
+            #     weight=params["bn_layer{0}.weight".format(i)],
+            #     bias=params["bn_layer{0}.bias".format(i)],
+            # )
             output = self.activation(output)
             # print('out shape: ', output.shape)
 

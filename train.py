@@ -2,7 +2,6 @@ import gym
 from policy import NormalPolicy
 import envs
 import os
-from tqdm import trange
 from tqdm import tqdm
 import torch
 from functools import reduce
@@ -17,6 +16,7 @@ import json
 import argparse
 from baseline import LinearFeatureBaseline
 
+import numpy as np
 # for i in range(1000):
 # observation, reward, terminated, info
 # res = env.step(env.action_space.sample())
@@ -47,10 +47,12 @@ def main(args):
         #     json.dump(config, f, indent=2)
 
     if args.seed is not None:
+        np.random.seed()
         torch.manual_seed(args.seed)
         torch.cuda.manual_seed_all(args.seed)
 
     env = gym.make("HalfCheetahVel-v2", render_mode="human")
+    env.reset()
     env.close()
     input_size = reduce(mul, env.observation_space.shape, 1)
 

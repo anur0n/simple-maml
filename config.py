@@ -33,7 +33,7 @@ activation = "tanh"
 fast_batch_size = 20
 
 # Number of gradient steps in the inner loop / fast adaptation.
-num_steps = 2
+num_steps = 1
 
 # Step size for each gradient step in the inner loop / fast adaptation.
 fast_lr = 0.1
@@ -42,7 +42,7 @@ fast_lr = 0.1
 # Optimization
 # ------------
 # Number of outer-loop updates (ie. number of batches of tasks).
-num_batches = 500
+num_batches = 1000
 
 # Number of tasks in each batch of tasks.
 meta_batch_size = 40
