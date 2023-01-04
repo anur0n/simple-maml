@@ -8,6 +8,7 @@ import time
 from copy import deepcopy
 from rl_utils import reinforce_loss
 from envs.sync_vector_env import SyncVectorEnv
+from utils import vector_to_parameters
 
 def make_env(env_name, env_kwargs={}, seed=None):
     def _make_env():
@@ -49,13 +50,13 @@ class Runner(object):
         valids = []
         for index, task in enumerate(tasks):
             self.envs.reset_task(task)
-            train, valid = self._sample(index, num_steps, fast_lr, gamma, gae_lambda, device)
+            train, valid, params = self._sample(index, num_steps, fast_lr, gamma, gae_lambda, device)
             trains.append(train)
             valids.append(valid)
 
-        return trains, valids
+        return trains, valids, params
 
-    def _sample(self, index, num_steps=1, fast_lr=0.5, gamma=0.95, gae_lambda=1.0, device='cpu'):
+    def _sample(self, index, num_steps=1, fast_lr=0.5, gamma=0.95, gae_lambda=1.0, device='cpu', update_policy=False):
         # Sample the training trajectories with the initial policy and adapt the
         # policy to the task, based on the REINFORCE loss computed on the
         # training trajectories. The gradient update in the fast adaptation uses
@@ -79,6 +80,8 @@ class Runner(object):
 
             loss = reinforce_loss(self.policy_net, train_episodes, params=params)
             params = self.policy_net.update_params(loss, params=params, step_size=fast_lr, first_order=True)
+            if update_policy:
+                vector_to_parameters(params, self.policy_net.parameters())
 
         # Sample the validation trajectories with the adapted policy
         valid_episodes = self.create_episodes(params=params, gamma=gamma, gae_lambda=gae_lambda, device=device)
@@ -86,7 +89,7 @@ class Runner(object):
         loss = reinforce_loss(self.policy_net, train_episodes_all[0], params=params)
         params = self.policy_net.update_params(loss, params=params, step_size=fast_lr, first_order=False)
 
-        return train_episodes_all, valid_episodes
+        return train_episodes_all, valid_episodes, params
 
     def create_episodes(self, params=None, gamma=0.95, gae_lambda=1.0, device='cpu'):
         episodes = BatchEpisodes(batch_size=self.batch_size,

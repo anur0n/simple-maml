@@ -32,7 +32,11 @@ def main(args):
         torch.manual_seed(args.seed)
         torch.cuda.manual_seed_all(args.seed)
 
-    env = gym.make("HalfCheetahVel-v2", render_mode="human")
+    env = gym.make(config.env_name, render_mode="human")
+    task = {'velocity':2.0}
+    if config.env_name == "HalfCheetahDir-v2":
+        task = {'direction': -1}
+    env.reset_task(task)
     env.close()
     input_size = reduce(mul, env.observation_space.shape, 1)
 
@@ -67,7 +71,7 @@ def main(args):
     progress_bar = tqdm(total=config.num_batches)
     for batch in range(config.num_batches):
         tasks = runner.sample_tasks(config.meta_batch_size)
-        trains, valids = runner.sample(
+        trains, valids, params = runner.sample(
             tasks=tasks,
             num_steps=config.num_steps,
             fast_lr=config.fast_lr,
@@ -96,8 +100,9 @@ def main(args):
     fps = 30
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     video = None
-
-    env = gym.make("HalfCheetahVel-v2", render_mode="rgb_array")
+    
+    env = gym.make(config.env_name, render_mode="rgb_array")
+    env.reset_task(task)
     # env.close()
     input_size = reduce(mul, env.observation_space.shape, 1)
 
@@ -107,12 +112,12 @@ def main(args):
     for _ in range(1000):
         frame = env.render()
         if video is None:
-            video_file = os.path.join(os.getcwd(),'output','test_with_smapling_30.mp4')
+            video_file = os.path.join(os.getcwd(),f'output',f'test_order2_norm_same_dir_rev_with_update_{config.num_batches}.mp4')
             print(video_file, frame.shape)
             video = cv2.VideoWriter(video_file, fourcc, float(fps), (frame.shape[1], frame.shape[0]))
         video.write(frame)
         observations_tensor = torch.from_numpy(observation).unsqueeze(0)
-        pi = policy(observations_tensor)
+        pi = policy(observations_tensor, params=params)
         actions_tensor = pi.sample()
         actions = actions_tensor.squeeze().cpu().numpy()
         # actions = env.action_space.sample()
@@ -123,7 +128,6 @@ def main(args):
             observation, info = env.reset()
     env.close()
     video.release()
-    # video.close()
     print(rewards_total)
 
 

@@ -83,7 +83,7 @@ def main(args):
     progress_bar = tqdm(total=config.num_batches)
     for batch in range(config.num_batches):
         tasks = runner.sample_tasks(config.meta_batch_size)
-        trains, valids = runner.sample(
+        trains, valids, _ = runner.sample(
             tasks=tasks,
             num_steps=config.num_steps,
             fast_lr=config.fast_lr,

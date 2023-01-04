@@ -1,4 +1,5 @@
 env_name = "HalfCheetahVel-v2"
+# env_name = "HalfCheetahDir-v2"
 
 env_kwargs = {
     "low": 0.0,
@@ -6,6 +7,12 @@ env_kwargs = {
     "normalization_scale": 10.0,
     "max_episode_steps": 100,
 }
+
+if env_name == "HalfCheetahDir-v2":
+    env_kwargs = {
+        "normalization_scale": 10.0,
+        "max_episode_steps": 100,
+    }
 
 # EPS for avoiding log(0)
 epsilon = 1e-15
