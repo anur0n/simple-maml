@@ -51,7 +51,7 @@ def main(args):
         torch.manual_seed(args.seed)
         torch.cuda.manual_seed_all(args.seed)
 
-    env = gym.make("HalfCheetahVel-v2", render_mode="human")
+    env = gym.make(config.env_name, render_mode="human")
     env.reset()
     env.close()
     input_size = reduce(mul, env.observation_space.shape, 1)
