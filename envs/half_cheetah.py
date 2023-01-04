@@ -79,7 +79,7 @@ class HalfCheetahVelEnv(HalfCheetahEnv):
         return (observation, reward, done, False, infos)
 
     def sample_tasks(self, num_tasks):
-        velocities = self.np_random.uniform(self.low, self.high, size=(num_tasks,))
+        velocities = self.np_random.uniform(self.low, self.high, size=(num_tasks,)) #[self._goal_vel]*num_tasks 
         tasks = [{'velocity': velocity} for velocity in velocities]
         return tasks
 
@@ -106,10 +106,10 @@ class HalfCheetahDirEnv(HalfCheetahEnv):
         model-based control", 2012 
         (https://homes.cs.washington.edu/~todorov/papers/TodorovIROS12.pdf)
     """
-    def __init__(self, task={}):
+    def __init__(self, task={}, **kwargs):
         self._task = task
         self._goal_dir = task.get('direction', 1)
-        super(HalfCheetahDirEnv, self).__init__()
+        super(HalfCheetahDirEnv, self).__init__(**kwargs)
 
     def step(self, action):
         xposbefore = self.data.qpos[0]
@@ -126,10 +126,10 @@ class HalfCheetahDirEnv(HalfCheetahEnv):
         infos = dict(reward_forward=forward_reward,
                      reward_ctrl=-ctrl_cost,
                      task=self._task)
-        return (observation, reward, done, infos)
+        return (observation, reward, done, False, infos)
 
     def sample_tasks(self, num_tasks):
-        directions = 2 * self.np_random.binomial(1, p=0.5, size=(num_tasks,)) - 1
+        directions = 2 * self.np_random.binomial(1, p=0.5, size=(num_tasks,)) - 1 #[self._goal_dir]*num_tasks
         tasks = [{'direction': direction} for direction in directions]
         return tasks
 
