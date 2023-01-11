@@ -16,6 +16,8 @@ import json
 import argparse
 from baseline import LinearFeatureBaseline
 
+from tensorboard_helper import TBHelper
+
 import numpy as np
 # for i in range(1000):
 # observation, reward, terminated, info
@@ -52,7 +54,9 @@ def main(args):
         torch.cuda.manual_seed_all(args.seed)
 
     env = gym.make(config.env_name, render_mode="human")
-    env.reset()
+    task = {'direction': -1}
+    env.reset_task(task)
+    # env.reset()
     env.close()
     input_size = reduce(mul, env.observation_space.shape, 1)
 
@@ -63,6 +67,15 @@ def main(args):
         hidden_layer_size=tuple(config.hidden_sizes),
         activation=config.activation,
     )
+    if args.resume:
+        if args.resume_folder is None and args.output_folder is None:
+            print("Can't resume. resume path not specified")
+            return
+        resume_folder = args.resume_folder if args.resume_folder is not None else args.output_folder
+        resume_policy = os.path.join(resume_folder, 'policy.th')
+        with open(resume_policy, "rb") as f:
+            state_dict = torch.load(f, map_location=torch.device(args.device))
+            policy.load_state_dict(state_dict)
     policy.share_memory()
 
     baseline = LinearFeatureBaseline(input_size)
@@ -78,6 +91,8 @@ def main(args):
     meta_learner = MAMLTRPO(
         policy=policy, fast_rl=config.fast_lr, first_order=config.first_order
     )
+
+    tb_helper = TBHelper(output_folder=args.output_folder)
 
     num_iterations = 0
     progress_bar = tqdm(total=config.num_batches)
@@ -107,6 +122,7 @@ def main(args):
         num_iterations += sum(sum(episode.lengths) for episode in valids)
 
         logs.update(
+            batch=batch,
             tasks=tasks,
             num_iterations=num_iterations,
             train_returns=rl_utils.get_train_returns(trains),
@@ -123,6 +139,8 @@ def main(args):
         progress_bar.write(
             f"Returns train: {logs['train_returns'].sum()} returns valid: {logs['valid_returns'].sum()}"
         )
+
+        tb_helper.write(logs=logs)
         
         # print('#########################################################################')
 
@@ -131,12 +149,27 @@ def main(args):
             with open(policy_filename, "wb") as f:
                 torch.save(policy.state_dict(), f)
         progress_bar.update(1)
+    tb_helper.close()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Reinforcement learning with "
         "Model-Agnostic Meta-Learning (MAML) - Train"
+    )
+
+    parser.add_argument(
+        "--resume",
+        default=False,
+        action=argparse.BooleanOptionalAction,
+        help="to resume from previous checkpoint.",
+    )
+
+    parser.add_argument(
+        "--resume-folder",
+        type=str,
+        default="output/policy.th",
+        help="path to the resume policy checkpoint",
     )
 
     # Miscellaneous

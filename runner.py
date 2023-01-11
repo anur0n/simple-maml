@@ -45,12 +45,12 @@ class Runner(object):
     def sample_tasks(self, num_tasks):
         return self.env.unwrapped.sample_tasks(num_tasks)
     
-    def sample(self, tasks, num_steps=1, fast_lr=0.5, gamma=0.95, gae_lambda=1.0, device='cpu'):
+    def sample(self, tasks, num_steps=1, fast_lr=0.5, gamma=0.95, gae_lambda=1.0, device='cpu', update_policy=False):
         trains = []
         valids = []
         for index, task in enumerate(tasks):
             self.envs.reset_task(task)
-            train, valid, params = self._sample(index, num_steps, fast_lr, gamma, gae_lambda, device)
+            train, valid, params = self._sample(index, num_steps, fast_lr, gamma, gae_lambda, device, update_policy)
             trains.append(train)
             valids.append(valid)
 
